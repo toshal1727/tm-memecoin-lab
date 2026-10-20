@@ -1,0 +1,542 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#090b13">
+<title>TM Memecoin Lab</title>
+
+<style>
+:root {
+  --bg:#090b13;
+  --panel:#111522;
+  --panel2:#151a2b;
+  --line:#272d41;
+  --text:#f3f5ff;
+  --muted:#929bb5;
+  --purple:#9a7bff;
+  --green:#48f2b0;
+  --red:#ff6c89;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font:14px/1.5 Inter,system-ui,sans-serif;
+  overflow-x:hidden;
+}
+body:before {
+  content:"";
+  position:fixed;
+  inset:-40%;
+  z-index:-1;
+  pointer-events:none;
+  background:
+    radial-gradient(ellipse at 20% 10%,#432b8a33,transparent 42%),
+    radial-gradient(ellipse at 90% 55%,#00a98618,transparent 38%);
+  animation:aurora 15s ease-in-out infinite alternate;
+}
+@keyframes aurora {
+  from { transform:translate(-2%,-1%) rotate(0deg); }
+  to { transform:translate(2%,2%) rotate(5deg); }
+}
+button,input { font:inherit; }
+button { cursor:pointer; }
+button:focus-visible,input:focus-visible {
+  outline:2px solid var(--purple);
+  outline-offset:3px;
+}
+.app { display:grid; grid-template-columns:225px minmax(0,1fr); min-height:100vh; }
+.sidebar {
+  border-right:1px solid var(--line);
+  padding:25px 16px;
+  background:#0b0e18d9;
+}
+.brand { display:flex; align-items:center; gap:11px; margin-bottom:38px; }
+.logo {
+  width:43px;height:43px;display:grid;place-items:center;
+  border-radius:14px;font-weight:900;font-size:17px;
+  background:linear-gradient(135deg,#a68aff,#6347d7);
+  box-shadow:0 0 26px #8965ff55;
+}
+.brand strong { display:block; letter-spacing:1.5px; }
+.brand small { color:var(--muted); }
+.nav-label {
+  color:#737d99;font-size:10px;letter-spacing:2px;
+  margin:22px 10px 9px;
+}
+.nav button {
+  display:flex;width:100%;gap:12px;align-items:center;
+  padding:12px;border:1px solid transparent;border-radius:10px;
+  background:transparent;color:var(--muted);text-align:left;margin:3px 0;
+}
+.nav button:hover,.nav button.active {
+  background:#9a7bff17;border-color:#9a7bff30;color:white;
+}
+.sidebar-note {
+  margin-top:45px;padding:14px;border:1px solid var(--line);
+  border-radius:12px;background:linear-gradient(140deg,#17182b,#101522);
+}
+.sidebar-note p { color:var(--muted);font-size:12px;margin-bottom:0; }
+main { min-width:0;padding:25px clamp(15px,3vw,36px); }
+.topbar {
+  display:flex;align-items:center;justify-content:space-between;
+  gap:15px;flex-wrap:wrap;margin-bottom:30px;
+}
+.eyebrow { color:var(--purple);letter-spacing:2px;font-size:10px;font-weight:800; }
+.status {
+  display:inline-flex;align-items:center;gap:8px;
+  border:1px solid #48f2b044;background:#48f2b00d;
+  border-radius:99px;padding:8px 12px;color:var(--green);font-size:11px;
+}
+.dot { width:7px;height:7px;border-radius:50%;background:var(--green); }
+h1 { font-size:clamp(25px,3vw,34px);letter-spacing:-1px;margin:6px 0; }
+h2 { font-size:16px;margin:0; }
+p { margin-top:5px; }
+.muted { color:var(--muted); }
+.small { font-size:11px; }
+.toolbar { display:flex;gap:8px;flex-wrap:wrap; }
+.btn {
+  padding:10px 14px;border-radius:9px;border:1px solid var(--line);
+  background:#171c2b;color:var(--text);
+}
+.btn:hover { border-color:var(--purple); }
+.btn.primary { background:var(--purple);border-color:var(--purple);color:#100c20;font-weight:800; }
+.btn:disabled { opacity:.45;cursor:not-allowed; }
+.grid { display:grid;gap:15px; }
+.stats { grid-template-columns:repeat(4,minmax(0,1fr));margin:23px 0; }
+.card {
+  background:linear-gradient(145deg,#14192aee,#101420ee);
+  border:1px solid var(--line);border-radius:15px;padding:18px;
+  box-shadow:0 8px 30px #00000012;
+  transition:transform .2s,border-color .2s;
+}
+.card:hover { border-color:#9a7bff66;transform:translateY(-2px); }
+.stat-title { color:var(--muted);font-size:12px; }
+.stat-value { font-size:clamp(19px,2.2vw,27px);font-weight:800;margin:8px 0 2px;letter-spacing:-.7px; }
+.green { color:var(--green); }
+.red { color:var(--red); }
+.purple { color:var(--purple); }
+.two-col { grid-template-columns:minmax(0,1.65fr) minmax(240px,1fr); }
+.card-head { display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:16px; }
+.chart-wrap { height:225px;position:relative; }
+canvas { width:100%;height:100%;display:block; }
+.legend { display:flex;gap:15px;flex-wrap:wrap;color:var(--muted);font-size:11px;margin-top:10px; }
+.legend span:before {
+  content:"";display:inline-block;width:8px;height:8px;
+  border-radius:3px;background:var(--green);margin-right:6px;
+}
+.legend span:last-child:before { background:var(--purple); }
+.risk-row { display:flex;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--line); }
+.risk-row:last-child { border:0; }
+.risk-row span:first-child { color:var(--muted); }
+.risk-value { font-weight:700; }
+.pill {
+  display:inline-block;border-radius:6px;padding:4px 7px;
+  font-size:10px;font-weight:800;white-space:nowrap;
+}
+.watch { color:#d4c4ff;background:#9a7bff20; }
+.candidate { color:var(--green);background:#48f2b018; }
+.avoid { color:var(--red);background:#ff6c8918; }
+.section { margin-top:20px; }
+.table-tools { display:flex;gap:10px;align-items:center;flex-wrap:wrap; }
+input {
+  background:#0b0f1a;border:1px solid var(--line);color:var(--text);
+  padding:10px 12px;border-radius:9px;min-width:0;
+}
+#search { width:min(230px,100%); }
+.table-wrap { overflow:auto; }
+table { width:100%;border-collapse:collapse;white-space:nowrap; }
+th {
+  text-align:left;color:var(--muted);font-size:10px;
+  letter-spacing:.8px;font-weight:700;
+}
+th,td { padding:13px 10px;border-bottom:1px solid #272d4166; }
+tbody tr:hover { background:#ffffff05; }
+.coin-name { display:flex;align-items:center;gap:10px; }
+.coin-icon {
+  width:30px;height:30px;display:grid;place-items:center;
+  border-radius:10px;background:#9a7bff20;color:#c9b9ff;font-weight:800;
+}
+.action-btn { padding:6px 9px;font-size:11px;border-radius:7px; }
+.bottom-grid { grid-template-columns:1fr 1fr;margin-top:20px; }
+.trade-list { max-height:260px;overflow:auto; }
+.empty { color:var(--muted);padding:20px 0;text-align:center; }
+.footer { color:#737d99;font-size:11px;text-align:center;padding:30px 0 12px; }
+.notice {
+  color:#c6cce0;background:#171c2b;border:1px solid var(--line);
+  padding:12px 14px;border-radius:10px;font-size:12px;margin-top:17px;
+}
+.hidden { display:none!important; }
+@media(max-width:1000px) {
+  .stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .two-col { grid-template-columns:1fr; }
+}
+@media(max-width:650px) {
+  .app { grid-template-columns:1fr; }
+  .sidebar { padding:14px;border-right:0;border-bottom:1px solid var(--line); }
+  .brand { margin-bottom:13px; }
+  .nav { display:flex;gap:6px;overflow-x:auto; }
+  .nav-label,.sidebar-note { display:none; }
+  .nav button { min-width:max-content;width:auto;padding:9px; }
+  main { padding:18px 12px; }
+  .bottom-grid { grid-template-columns:1fr; }
+  .topbar { margin-bottom:20px; }
+  .card { padding:14px; }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">TM</div>
+      <div><strong>TM LAB</strong><small>MEMECOIN RESEARCH</small></div>
+    </div>
+
+    <div class="nav-label">WORKSPACE</div>
+    <nav class="nav">
+      <button class="active" data-target="overview">◈ Overview</button>
+      <button data-target="markets">▤ Market Scanner</button>
+      <button data-target="portfolio">◉ Paper Portfolio</button>
+      <button data-target="backtest">⌁ Backtest</button>
+    </nav>
+
+    <div class="sidebar-note">
+      <div class="eyebrow">SIMULATION MODE</div>
+      <strong>Learn without live orders.</strong>
+      <p>Virtual cash only. No wallet connected.</p>
+    </div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">TM MEMECOIN LAB / TERMINAL 01</div>
+        <h1 id="pageTitle">Market Overview</h1>
+        <div class="muted">Market research, experimental signals & virtual portfolio</div>
+      </div>
+      <div class="toolbar">
+        <span class="status"><span class="dot"></span> SIMULATION ONLY</span>
+        <button class="btn primary" id="refresh">↻ Refresh Data</button>
+      </div>
+    </header>
+
+    <section id="overview">
+      <div class="stats grid">
+        <div class="card">
+          <div class="stat-title">Virtual Starting Balance</div>
+          <div class="stat-value" id="startBalance">$10,000.00</div>
+          <div class="muted small">Paper account</div>
+        </div>
+        <div class="card">
+          <div class="stat-title">Portfolio Value</div>
+          <div class="stat-value" id="portfolioValue">$10,000.00</div>
+          <div class="muted small">Cash + marked holdings</div>
+        </div>
+        <div class="card">
+          <div class="stat-title">Unrealized + Realized P/L</div>
+          <div class="stat-value" id="profitLoss">$0.00</div>
+          <div class="muted small" id="returnPct">0.00% since start</div>
+        </div>
+        <div class="card">
+          <div class="stat-title">Assets Scanned</div>
+          <div class="stat-value" id="assetCount">0</div>
+          <div class="muted small" id="dataStatus">Waiting for market data</div>
+        </div>
+      </div>
+
+      <div class="grid two-col">
+        <div class="card">
+          <div class="card-head">
+            <div><h2>Virtual Portfolio Performance</h2><div class="muted small">Recorded portfolio snapshots</div></div>
+            <span class="pill watch">PAPER</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chart"></canvas></div>
+          <div class="legend"><span>Portfolio value</span><span>Starting balance</span></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Risk Controls</h2><span class="pill watch">DEMO</span></div>
+          <div class="risk-row"><span>Maximum paper position</span><span class="risk-value">5% of start</span></div>
+          <div class="risk-row"><span>Simulated fee per side</span><span class="risk-value">0.10%</span></div>
+          <div class="risk-row"><span>Virtual starting cash</span><span class="risk-value">$10,000</span></div>
+          <div class="risk-row"><span>Live order access</span><span class="risk-value green">Disabled</span></div>
+          <div class="notice">Signals are simple rules, not AI predictions or guarantees. Stop and target levels do not guarantee execution prices.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="markets" class="card section">
+      <div class="card-head">
+        <div><h2>Market Scanner</h2><div class="muted small">Public market data when available</div></div>
+        <div class="table-tools">
+          <input id="search" placeholder="Search coin or symbol..." aria-label="Search coins">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>ASSET</th><th>PRICE USD</th><th>24H CHANGE</th>
+            <th>24H VOLUME</th><th>MARKET CAP</th><th>EXPERIMENTAL SIGNAL</th><th>PAPER ACTION</th>
+          </tr></thead>
+          <tbody id="marketRows">
+            <tr><td colspan="7" class="empty">Loading public market data…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="muted small" style="margin-top:12px">Market data availability depends on the public data provider and its rate limits.</div>
+    </section>
+
+    <div class="grid bottom-grid">
+      <section id="portfolio" class="card section">
+        <div class="card-head"><h2>Virtual Holdings</h2><span class="pill candidate">NO REAL MONEY</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>COIN</th><th>QUANTITY</th><th>ENTRY</th><th>VALUE</th></tr></thead>
+            <tbody id="holdingRows"><tr><td colspan="4" class="empty">No open positions</td></tr></tbody>
+          </table>
+        </div>
+        <div class="muted small" style="margin-top:12px">Your paper portfolio is stored in this browser only.</div>
+      </section>
+
+      <section class="card section">
+        <div class="card-head"><h2>Paper Trade History</h2><button class="btn action-btn" id="clearHistory">Reset Paper Account</button></div>
+        <div class="trade-list" id="tradeHistory"><div class="empty">No simulated trades yet.</div></div>
+      </section>
+    </div>
+
+    <section id="backtest" class="card section">
+      <div class="card-head"><h2>Historical Backtest</h2><span class="pill watch">NOT CONNECTED</span></div>
+      <p class="muted">Your historical results from Google Colab are not automatically available to a separate website. Connect or import a verified backtest export to display real test results here.</p>
+      <div class="notice">Do not treat sample values, 24-hour movement, or experimental signals as proof of a profitable strategy.</div>
+    </section>
+
+    <div class="footer">
+      TM MEMECOIN LAB · Educational research dashboard · Simulation only<br>
+      No investment advice. No exchange orders. No wallet connections.
+    </div>
+  </main>
+</div>
+
+<script>
+const STARTING_CASH = 10000;
+const FEE_RATE = 0.001;
+const MAX_POSITION = STARTING_CASH * 0.05;
+const STORAGE_KEY = "tm-memecoin-paper-v1";
+
+const demoCoins = [
+  {name:"Dogecoin",symbol:"DOGE",current_price:0.15,price_change_percentage_24h:2.4,total_volume:900000000,market_cap:22000000000},
+  {name:"Shiba Inu",symbol:"SHIB",current_price:0.000014,price_change_percentage_24h:-1.2,total_volume:200000000,market_cap:8000000000},
+  {name:"Pepe",symbol:"PEPE",current_price:0.000009,price_change_percentage_24h:11,total_volume:450000000,market_cap:3500000000},
+  {name:"Bonk",symbol:"BONK",current_price:0.00002,price_change_percentage_24h:5,total_volume:80000000,market_cap:1400000000},
+  {name:"Floki",symbol:"FLOKI",current_price:0.0001,price_change_percentage_24h:-12,total_volume:60000000,market_cap:900000000}
+];
+
+function freshState() {
+  return {cash:STARTING_CASH,positions:{},trades:[],snapshots:[STARTING_CASH]};
+}
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (s && Number.isFinite(s.cash) && s.positions && Array.isArray(s.trades) && Array.isArray(s.snapshots)) return s;
+  } catch(e) {}
+  return freshState();
+}
+let state = loadState();
+let coins = [];
+let usingDemo = false;
+
+function money(n) {
+  if (!Number.isFinite(Number(n))) return "—";
+  return Number(n).toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:Number(n)<0.01?8:2});
+}
+function compact(n) {
+  return Number(n||0).toLocaleString("en-US",{notation:"compact",maximumFractionDigits:2});
+}
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); }
+  catch(e) { console.warn("Browser storage unavailable"); }
+}
+function signalFor(c) {
+  const ch = c.price_change_percentage_24h;
+  const volume = c.total_volume || 0;
+  if (!(c.current_price > 0)) return ["AVOID","avoid"];
+  if (volume < 100000 || ch == null) return ["AVOID","avoid"];
+  if (ch < -10) return ["AVOID","avoid"];
+  if (ch > 8 && ch <= 20) return ["PAPER CANDIDATE","candidate"];
+  return ["WATCH","watch"];
+}
+function portfolioValue() {
+  return state.cash + Object.entries(state.positions).reduce((sum,[sym,p]) => {
+    const coin = coins.find(c=>c.symbol.toUpperCase()===sym);
+    return sum + p.quantity * (coin?.current_price || p.entry);
+  },0);
+}
+function recordSnapshot() {
+  state.snapshots.push(portfolioValue());
+  if(state.snapshots.length>80) state.snapshots.shift();
+  saveState();
+}
+function renderStats() {
+  const value = portfolioValue();
+  const pnl = value - STARTING_CASH;
+  document.getElementById("portfolioValue").textContent = money(value);
+  document.getElementById("profitLoss").textContent = (pnl>=0?"+":"")+money(pnl);
+  document.getElementById("profitLoss").className = "stat-value " + (pnl>=0?"green":"red");
+  document.getElementById("returnPct").textContent = (pnl/STARTING_CASH*100).toFixed(2)+"% since start";
+  document.getElementById("assetCount").textContent = coins.length;
+  document.getElementById("dataStatus").textContent = usingDemo?"Demo fallback data":"Public market snapshot";
+  drawChart();
+}
+function renderMarkets() {
+  const q = document.getElementById("search").value.trim().toLowerCase();
+  const filtered = coins.filter(c=>(c.name+" "+c.symbol).toLowerCase().includes(q));
+  const body = document.getElementById("marketRows");
+  if (!filtered.length) {
+    body.innerHTML='<tr><td colspan="7" class="empty">No matching assets.</td></tr>';
+    return;
+  }
+  body.innerHTML = filtered.map(c=>{
+    const sym = c.symbol.toUpperCase();
+    const change = c.price_change_percentage_24h;
+    const [label,cls] = signalFor(c);
+    const held = Boolean(state.positions[sym]);
+    return `<tr>
+      <td><div class="coin-name"><span class="coin-icon">${sym.slice(0,3)}</span><div><strong>${escapeHTML(c.name)}</strong><div class="muted small">${escapeHTML(sym)}</div></div></div></td>
+      <td>${money(c.current_price)}</td>
+      <td class="${change>=0?'green':'red'}">${change==null?'—':(change>0?'+':'')+Number(change).toFixed(2)+'%'}</td>
+      <td>$${compact(c.total_volume)}</td>
+      <td>$${compact(c.market_cap)}</td>
+      <td><span class="pill ${cls}">${label}</span></td>
+      <td>${held
+        ? `<button class="btn action-btn" data-action="sell" data-symbol="${sym}">Paper Sell</button>`
+        : `<button class="btn action-btn" data-action="buy" data-symbol="${sym}">Paper Buy</button>`}
+      </td>
+    </tr>`;
+  }).join("");
+}
+function escapeHTML(v) {
+  return String(v).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
+function renderHoldings() {
+  const rows = Object.entries(state.positions);
+  document.getElementById("holdingRows").innerHTML = rows.length ? rows.map(([sym,p])=>{
+    const c = coins.find(x=>x.symbol.toUpperCase()===sym);
+    const price = c?.current_price || p.entry;
+    return `<tr><td>${escapeHTML(sym)}</td><td>${p.quantity.toPrecision(6)}</td><td>${money(p.entry)}</td><td>${money(p.quantity*price)}</td></tr>`;
+  }).join("") : '<tr><td colspan="4" class="empty">No open positions</td></tr>';
+}
+function renderTrades() {
+  const box = document.getElementById("tradeHistory");
+  box.innerHTML = state.trades.length ? [...state.trades].reverse().map(t=>
+    `<div class="risk-row"><div><strong>${escapeHTML(t.action)} · ${escapeHTML(t.symbol)}</strong><div class="muted small">${escapeHTML(t.time)}</div></div><div style="text-align:right"><strong>${money(t.price)}</strong><div class="muted small">Fee ${money(t.fee)}</div></div></div>`
+  ).join("") : '<div class="empty">No simulated trades yet.</div>';
+}
+function renderAll() {
+  renderStats();renderMarkets();renderHoldings();renderTrades();
+}
+function paperBuy(sym) {
+  const c = coins.find(x=>x.symbol.toUpperCase()===sym);
+  if (!c || !(c.current_price>0)) return alert("No valid price available.");
+  if (state.positions[sym]) return alert("You already have a position in this coin.");
+  const budget = Math.min(MAX_POSITION,state.cash);
+  if (budget<=0) return alert("Not enough virtual cash.");
+  const fee = budget*FEE_RATE;
+  const quantity = (budget-fee)/c.current_price;
+  state.cash -= budget;
+  state.positions[sym] = {quantity,entry:c.current_price};
+  state.trades.push({action:"PAPER BUY",symbol:sym,price:c.current_price,quantity,fee,time:new Date().toLocaleString()});
+  recordSnapshot();renderAll();
+}
+function paperSell(sym) {
+  const c = coins.find(x=>x.symbol.toUpperCase()===sym);
+  const p = state.positions[sym];
+  if (!c || !p) return;
+  const gross = p.quantity*c.current_price;
+  const fee = gross*FEE_RATE;
+  state.cash += gross-fee;
+  state.trades.push({action:"PAPER SELL",symbol:sym,price:c.current_price,quantity:p.quantity,fee,time:new Date().toLocaleString()});
+  delete state.positions[sym];
+  recordSnapshot();renderAll();
+}
+function drawChart() {
+  const canvas = document.getElementById("chart");
+  const rect = canvas.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width*dpr;canvas.height = rect.height*dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr,dpr);
+  const w=rect.width,h=rect.height,pad=16;
+  const data = state.snapshots.length ? state.snapshots : [STARTING_CASH];
+  const all = [...data,STARTING_CASH];
+  let min=Math.min(...all),max=Math.max(...all);
+  const range=Math.max(max-min,STARTING_CASH*0.005);
+  min-=range*0.15;max+=range*0.15;
+  const x=i=>pad+(w-2*pad)*(data.length===1?0:i/(data.length-1));
+  const y=v=>h-pad-(v-min)/(max-min)*(h-2*pad);
+  ctx.strokeStyle="#272d41";ctx.lineWidth=1;
+  for(let i=0;i<4;i++){let yy=pad+(h-2*pad)*i/3;ctx.beginPath();ctx.moveTo(pad,yy);ctx.lineTo(w-pad,yy);ctx.stroke();}
+  ctx.setLineDash([5,5]);ctx.strokeStyle="#9a7bff";ctx.beginPath();ctx.moveTo(pad,y(STARTING_CASH));ctx.lineTo(w-pad,y(STARTING_CASH));ctx.stroke();ctx.setLineDash([]);
+  const grad=ctx.createLinearGradient(0,pad,0,h);
+  grad.addColorStop(0,"rgba(72,242,176,.23)");grad.addColorStop(1,"rgba(72,242,176,0)");
+  ctx.beginPath();
+  data.forEach((v,i)=>i?ctx.lineTo(x(i),y(v)):ctx.moveTo(x(i),y(v)));
+  ctx.lineTo(x(data.length-1),h-pad);ctx.lineTo(x(0),h-pad);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+  ctx.beginPath();data.forEach((v,i)=>i?ctx.lineTo(x(i),y(v)):ctx.moveTo(x(i),y(v)));
+  ctx.strokeStyle="#48f2b0";ctx.lineWidth=2.5;ctx.stroke();
+}
+async function refreshMarkets() {
+  const btn=document.getElementById("refresh");
+  btn.disabled=true;btn.textContent="↻ Loading…";
+  try {
+    const url="https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=100&page=1&sparkline=false&price_change_percentage=24h";
+    const response=await fetch(url);
+    if(!response.ok) throw new Error("Market provider returned "+response.status);
+    const data=await response.json();
+    if(!Array.isArray(data)||!data.length) throw new Error("Empty market response");
+    coins=data;usingDemo=false;
+  } catch(err) {
+    coins=demoCoins;usingDemo=true;
+    console.warn("Using clearly labeled fallback data:",err);
+  }
+  document.getElementById("dataStatus").textContent=usingDemo?"Demo fallback data":"Public market snapshot";
+  renderAll();
+  btn.disabled=false;btn.textContent="↻ Refresh Data";
+}
+document.getElementById("refresh").addEventListener("click",refreshMarkets);
+document.getElementById("search").addEventListener("input",renderMarkets);
+document.getElementById("marketRows").addEventListener("click",e=>{
+  const btn=e.target.closest("button[data-action]");
+  if(!btn)return;
+  const sym=btn.dataset.symbol;
+  if(btn.dataset.action==="buy") paperBuy(sym);
+  else if(btn.dataset.action==="sell") paperSell(sym);
+});
+document.getElementById("clearHistory").addEventListener("click",()=>{
+  if(confirm("Reset your virtual cash, holdings and paper-trade history?")){
+    state=freshState();saveState();renderAll();
+  }
+});
+document.querySelectorAll("[data-target]").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll("[data-target]").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    const target=btn.dataset.target;
+    document.getElementById("pageTitle").textContent=({
+      overview:"Market Overview",markets:"Market Scanner",
+      portfolio:"Paper Portfolio",backtest:"Historical Backtest"
+    })[target];
+    document.getElementById(target).scrollIntoView({behavior:"smooth",block:"start"});
+  });
+});
+window.addEventListener("resize",drawChart);
+renderAll();
+refreshMarkets();
+</script>
+</body>
+</html>
